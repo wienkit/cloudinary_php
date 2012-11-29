@@ -125,12 +125,24 @@ class Cloudinary {
 
         $params = array_filter($params);
         ksort($params);
-        $join_pair = function($key, $value) { return $key . "_" . $value; };
-        $transformation = implode(",", array_map($join_pair, array_keys($params), array_values($params)));
+        $join_pair_underscore = "Cloudinary::join_pair_underscore";
+        $transformation = implode(",", array_map($join_pair_underscore, array_keys($params), array_values($params)));
         $raw_transformation = Cloudinary::option_consume($options, "raw_transformation");
         $transformation = implode(",", array_filter(array($transformation, $raw_transformation)));
         array_push($base_transformations, $transformation);
         return implode("/", array_filter($base_transformations));
+    }
+  
+    private static function join_pair_underscore($key, $value) {
+        return $key . "_" . $value; 
+    }
+
+    private static function join_pair_equal($key, $value) {
+        return $key . "=" . $value; 
+    }
+
+    private static function join_pair_equal_quoted($key, $value) {
+        return $key . "='" . $value . "'"; 
     }
 
     // Warning: $options are being destructively updated!
@@ -173,7 +185,9 @@ class Cloudinary {
         if ($secure) {
             $prefix = "https://" . $secure_distribution;
         } else {
-            $subdomain = $cdn_subdomain ? "a" . ((crc32($source) % 5 + 5) % 5 + 1) . "." : "";
+            $crc=crc32($source);
+            if ($crc<0) $crc+=4294967296;
+            $subdomain = $cdn_subdomain ? "a" . (fmod($crc, 5) + 1) . "." : "";
             $host = $cname ? $cname : ($private_cdn ? $cloud_name . "-" : "") . "res.cloudinary.com";
             $prefix = "http://" . $subdomain . $host;
         }
@@ -214,14 +228,14 @@ class Cloudinary {
             }
         }
         ksort($params);
-        $join_pair = function($key, $value) { return $key . "=" . $value; };
-        $to_sign = implode("&", array_map($join_pair, array_keys($params), array_values($params)));
+        $join_pair_equal = "Cloudinary::join_pair_equal";
+        $to_sign = implode("&", array_map($join_pair_equal, array_keys($params), array_values($params)));
         return sha1($to_sign . $api_secret);
     }
     public static function html_attrs($options) {
         ksort($options);
-        $join_pair = function($key, $value) { return $key . "='" . $value . "'"; };
-        return implode(" ", array_map($join_pair, array_keys($options), array_values($options)));
+        $join_pair_equal_quoted = "Cloudinary::join_pair_equal_quoted";
+        return implode(" ", array_map($join_pair_equal_quoted, array_keys($options), array_values($options)));
     }
 }
 

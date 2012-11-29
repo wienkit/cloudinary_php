@@ -7,10 +7,11 @@ require_once($base . DIRECTORY_SEPARATOR . 'src/Api.php');
 class ApiTest extends PHPUnit_Framework_TestCase {
   static $initialized = FALSE;  
   public function setUp() {
+    Cloudinary::reset_config();
     if (!Cloudinary::config_get("api_secret")) {
       $this->markTestSkipped('Please setup environment for API test to run');
     }
-    $this->api = new \Cloudinary\Api();
+    $this->api = new CloudinaryApi();
     if (self::$initialized) return;
     self::$initialized = TRUE;
     try {
@@ -22,9 +23,9 @@ class ApiTest extends PHPUnit_Framework_TestCase {
     try {
       $this->api->delete_transformation("api_test_transformation2");
     } catch (Exception $e) {}
-    \Cloudinary\Uploader::upload("tests/logo.png", 
+    CloudinaryUploader::upload("tests/logo.png", 
       array("public_id"=>"api_test", "tags"=>"api_test_tag", "eager"=>array("transformation"=>array("width"=>100,"crop"=>"scale"))));
-    \Cloudinary\Uploader::upload("tests/logo.png", 
+    CloudinaryUploader::upload("tests/logo.png", 
       array("public_id"=>"api_test2", "tags"=>"api_test_tag", "eager"=>array("transformation"=>array("width"=>100,"crop"=>"scale"))));
   }
    
@@ -68,14 +69,13 @@ class ApiTest extends PHPUnit_Framework_TestCase {
     $this->assertNotEquals($resource, NULL);
   }
 
+  static function return_public_id($value) { return $value["public_id"]; }
+
   function test05_resources_by_prefix() {
     // should allow listing resources by prefix 
     $result = $this->api->resources(array("type"=>"upload", "prefix"=>"api_test"));
-    $func = function($resource) {
-        return $resource["public_id"];
-    };
-
-    $public_ids = array_map($func, $result["resources"]);  
+    $return_public_id = "ApiTest::return_public_id";
+    $public_ids = array_map($return_public_id, $result["resources"]);  
     $this->assertContains("api_test", $public_ids);
     $this->assertContains("api_test2", $public_ids);
   }
@@ -98,7 +98,7 @@ class ApiTest extends PHPUnit_Framework_TestCase {
   
   function test08_delete_derived() {
     // should allow deleting derived resource 
-    \Cloudinary\Uploader::upload("tests/logo.png", array("public_id"=>"api_test3", "eager"=>array("transformation"=>array("width"=> 101,"crop" => "scale"))));    
+    CloudinaryUploader::upload("tests/logo.png", array("public_id"=>"api_test3", "eager"=>array("transformation"=>array("width"=> 101,"crop" => "scale"))));    
     $resource = $this->api->resource("api_test3");
     $this->assertNotEquals($resource, NULL);    
     $this->assertEquals(count($resource["derived"]), 1);
@@ -110,11 +110,11 @@ class ApiTest extends PHPUnit_Framework_TestCase {
   }
   
   /**
-   * @expectedException \Cloudinary\Api\NotFound
+   * @expectedException CloudinaryApiNotFound
    */
   function test09_delete_resources() {
     // should allow deleting resources 
-    \Cloudinary\Uploader::upload("tests/logo.png", array("public_id"=>"api_test3"));
+    CloudinaryUploader::upload("tests/logo.png", array("public_id"=>"api_test3"));
     $resource = $this->api->resource("api_test3");
     $this->assertNotEquals($resource, NULL);    
     $this->api->delete_resources(array("apit_test", "api_test2", "api_test3"));
@@ -122,11 +122,11 @@ class ApiTest extends PHPUnit_Framework_TestCase {
   }
 
   /**
-   * @expectedException \Cloudinary\Api\NotFound
+   * @expectedException CloudinaryApiNotFound
    */
   function test09a_delete_resources_by_prefix() {
     // should allow deleting resources 
-    \Cloudinary\Uploader::upload("tests/logo.png", array("public_id"=>"api_test_by_prefix"));
+    CloudinaryUploader::upload("tests/logo.png", array("public_id"=>"api_test_by_prefix"));
     $resource = $this->api->resource("api_test_by_prefix");
     $this->assertNotEquals($resource, NULL);    
     $this->api->delete_resources_by_prefix("api_test_by");
@@ -134,11 +134,11 @@ class ApiTest extends PHPUnit_Framework_TestCase {
   }
 
   /**
-   * @expectedException \Cloudinary\Api\NotFound
+   * @expectedException CloudinaryApiNotFound
    */
   function test09b_delete_resources_by_tag() {
     // should allow deleting resources 
-    \Cloudinary\Uploader::upload("tests/logo.png", array("public_id"=>"api_test4", "tags"=>array("api_test_tag_for_delete")));
+    CloudinaryUploader::upload("tests/logo.png", array("public_id"=>"api_test4", "tags"=>array("api_test_tag_for_delete")));
     $resource = $this->api->resource("api_test4");
     $this->assertNotEquals($resource, NULL);    
     $this->api->delete_resources_by_tag("api_test_tag_for_delete");
@@ -211,7 +211,7 @@ class ApiTest extends PHPUnit_Framework_TestCase {
   }
   
   /**
-   * @expectedException \Cloudinary\Api\NotFound
+   * @expectedException CloudinaryApiNotFound
    */
   function test16b_transformation_delete() {
     $this->api->transformation("api_test_transformation2");
@@ -224,7 +224,7 @@ class ApiTest extends PHPUnit_Framework_TestCase {
   }
   
   /**
-   * @expectedException \Cloudinary\Api\NotFound
+   * @expectedException CloudinaryApiNotFound
    */
   function test17b_transformation_delete_implicit() {  
     $this->api->transformation("c_scale,w_100");

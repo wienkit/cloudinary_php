@@ -1,38 +1,32 @@
 <?php
 
-
-namespace Cloudinary\Api {
-  class Error extends \Exception {}
-  class NotFound extends Error {}
-  class NotAllowed extends Error {}
-  class AlreadyExists extends Error {}
-  class RateLimited extends Error {}
-  class BadRequest extends Error {}
-  class GeneralError extends Error {}
-  class AuthorizationRequired extends Error {} 
-  class Response extends \ArrayObject {
+  class CloudinaryApiError extends Exception {}
+  class CloudinaryApiNotFound extends CloudinaryApiError {}
+  class CloudinaryApiNotAllowed extends CloudinaryApiError {}
+  class CloudinaryApiAlreadyExists extends CloudinaryApiError {}
+  class CloudinaryApiRateLimited extends CloudinaryApiError {}
+  class CloudinaryApiBadRequest extends CloudinaryApiError {}
+  class CloudinaryApiGeneralError extends CloudinaryApiError {}
+  class CloudinaryApiAuthorizationRequired extends CloudinaryApiError {} 
+  class CloudinaryApiResponse extends ArrayObject {
     function __construct($response) {        
-        parent::__construct(\Cloudinary\Api::parse_json_response($response));
+        parent::__construct(CloudinaryApi::parse_json_response($response));
         $this->rate_limit_reset_at = strtotime($response->headers["X-FeatureRateLimit-Reset"]);
         $this->rate_limit_allowed = intval($response->headers["X-FeatureRateLimit-Limit"]);
         $this->rate_limit_remaining = intval($response->headers["X-FeatureRateLimit-Remaining"]);
     }    
   }  
-}  
 
 
-namespace Cloudinary {
-
-
-class Api {
+class CloudinaryApi {
   static $CLOUDINARY_API_ERROR_CLASSES = array(
-    400 => "\Cloudinary\Api\BadRequest",
-    401 => "\Cloudinary\Api\AuthorizationRequired",
-    403 => "\Cloudinary\Api\NotAllowed",
-    404 => "\Cloudinary\Api\NotFound",
-    409 => "\Cloudinary\Api\AlreadyExists",
-    420 => "\Cloudinary\Api\RateLimited",
-    500 => "\Cloudinary\Api\GeneralError"
+    400 => "CloudinaryApiBadRequest",
+    401 => "CloudinaryApiAuthorizationRequired",
+    403 => "CloudinaryApiNotAllowed",
+    404 => "CloudinaryApiNotFound",
+    409 => "CloudinaryApiAlreadyExists",
+    420 => "CloudinaryApiRateLimited",
+    500 => "CloudinaryApiGeneralError"
    );
 
   function resource_types($options=array()) {
@@ -40,42 +34,42 @@ class Api {
   }
 
   function resources($options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
-    $type = \Cloudinary::option_get($options, "type");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
+    $type = Cloudinary::option_get($options, "type");
     $uri = array("resources", $resource_type);
     if ($type) array_push($uri, $type);
     return $this->call_api("get", $uri, $this->only($options, array("next_cursor", "max_results", "prefix")), $options);    
   }
   
   function resources_by_tag($tag, $options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
     $uri = array("resources", $resource_type, "tags", $tag);
     return $this->call_api("get", $uri, $this->only($options, array("next_cursor", "max_results")), $options);    
   }
   
   function resource($public_id, $options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
-    $type = \Cloudinary::option_get($options, "type", "upload");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
+    $type = Cloudinary::option_get($options, "type", "upload");
     $uri = array("resources", $resource_type, $type, $public_id);
     return $this->call_api("get", $uri, $this->only($options, array("exif", "colors", "faces", "max_results")), $options);      
   }
   
   function delete_resources($public_ids, $options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
-    $type = \Cloudinary::option_get($options, "type", "upload");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
+    $type = Cloudinary::option_get($options, "type", "upload");
     $uri = array("resources", $resource_type, $type);
     return $this->call_api("delete", $uri, array_merge(array("public_ids"=>$public_ids), $this->only($options, array("keep_original"))), $options);      
   }
 
   function delete_resources_by_prefix($prefix, $options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
-    $type = \Cloudinary::option_get($options, "type", "upload");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
+    $type = Cloudinary::option_get($options, "type", "upload");
     $uri = array("resources", $resource_type, $type);
     return $this->call_api("delete", $uri, array_merge(array("prefix"=>$prefix), $this->only($options, array("keep_original"))), $options);      
   }  
   
   function delete_resources_by_tag($tag, $options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
     $uri = array("resources", $resource_type, "tags", $tag);
     return $this->call_api("delete", $uri, $this->only($options, array("keep_original")), $options);    
   }
@@ -86,7 +80,7 @@ class Api {
   }
 
   function tags($options=array()) {
-    $resource_type = \Cloudinary::option_get($options, "resource_type", "image");
+    $resource_type = Cloudinary::option_get($options, "resource_type", "image");
     $uri = array("tags", $resource_type);
     return $this->call_api("get", $uri, $this->only($options, array("next_cursor", "max_results", "prefix")), $options);
   }
@@ -117,13 +111,13 @@ class Api {
   }
   
   protected function call_api($method, $uri, $params, &$options) {
-    $prefix = \Cloudinary::option_get($options, "upload_prefix", \Cloudinary::config_get("upload_prefix", "https://api.cloudinary.com"));
-    $cloud_name = \Cloudinary::option_get($options, "cloud_name", \Cloudinary::config_get("cloud_name"));
-    if (!$cloud_name) throw new \InvalidArgumentException("Must supply cloud_name");
-    $api_key = \Cloudinary::option_get($options, "api_key", \Cloudinary::config_get("api_key"));
-    if (!$api_key) throw new \InvalidArgumentException("Must supply api_key");
-    $api_secret = \Cloudinary::option_get($options, "api_secret", \Cloudinary::config_get("api_secret"));
-    if (!$api_secret) throw new \InvalidArgumentException("Must supply api_secret");
+    $prefix = Cloudinary::option_get($options, "upload_prefix", Cloudinary::config_get("upload_prefix", "https://api.cloudinary.com"));
+    $cloud_name = Cloudinary::option_get($options, "cloud_name", Cloudinary::config_get("cloud_name"));
+    if (!$cloud_name) throw new InvalidArgumentException("Must supply cloud_name");
+    $api_key = Cloudinary::option_get($options, "api_key", Cloudinary::config_get("api_key"));
+    if (!$api_key) throw new InvalidArgumentException("Must supply api_key");
+    $api_secret = Cloudinary::option_get($options, "api_secret", Cloudinary::config_get("api_secret"));
+    if (!$api_secret) throw new InvalidArgumentException("Must supply api_secret");
     $api_url = implode("/", array_merge(array($prefix, "v1_1", $cloud_name), $uri));
     $api_url .= "?" . preg_replace("/%5B\d+%5D/", "%5B%5D", http_build_query($params)); 
     $ch = curl_init($api_url);    
@@ -132,15 +126,15 @@ class Api {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_TIMEOUT, 60);
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-    curl_setopt($ch, CURLOPT_USERPWD, "{$api_key}:{$api_secret}");
+    curl_setopt($ch, CURLOPT_USERPWD, $api_key.":".$api_secret);
     curl_setopt($ch, CURLOPT_CAINFO,realpath(dirname(__FILE__))."/cacert.pem");
     $response = $this->execute($ch);       
     curl_close($ch);
     if ($response->responseCode == 200) {
-      return new \Cloudinary\Api\Response($response);
+      return new CloudinaryApiResponse($response);
     } else {
-      $exception_class = \Cloudinary::option_get(self::$CLOUDINARY_API_ERROR_CLASSES, $response->responseCode);
-      if (!$exception_class) throw new \Cloudinary\Api\GeneralError("Server returned unexpected status code - {$response->responseCode} - {$response->body}");
+      $exception_class = Cloudinary::option_get(self::$CLOUDINARY_API_ERROR_CLASSES, $response->responseCode);
+      if (!$exception_class) throw new CloudinaryApiGeneralError("Server returned unexpected status code - {$response->responseCode} - {$response->body}");
       $json = $this->parse_json_response($response);
       throw new $exception_class($json["error"]["message"]);
     }
@@ -172,7 +166,7 @@ class Api {
         }
         $str = strtok("\n");
     }
-    $result = new \stdClass;    
+    $result = new stdClass;    
     $result->headers = $headers;
     $result->body = trim($content);
     $result->responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -183,7 +177,7 @@ class Api {
     $result = json_decode($response->body, TRUE);
     if ($result == NULL) {
       $error = json_last_error();
-      throw new \Cloudinary\Api\GeneralError("Error parsing server response ({$response->responseCode}) - {$response->body}. Got - {$error}");
+      throw new CloudinaryApiGeneralError("Error parsing server response ({$response->responseCode}) - {$response->body}. Got - {$error}");
     }
     return $result; 
   }
@@ -198,8 +192,7 @@ class Api {
   }
   
   protected function transformation_string($transformation) {
-    return is_string($transformation) ? $transformation : \Cloudinary::generate_transformation_string($transformation);
+    return is_string($transformation) ? $transformation : Cloudinary::generate_transformation_string($transformation);
   }
 }
 
-}
