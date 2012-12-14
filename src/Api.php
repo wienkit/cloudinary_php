@@ -195,4 +195,4 @@ class CloudinaryApi {
     return is_string($transformation) ? $transformation : Cloudinary::generate_transformation_string($transformation);
   }
 }
-
+?>
