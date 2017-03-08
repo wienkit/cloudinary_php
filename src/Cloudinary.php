@@ -232,7 +232,7 @@ class Cloudinary {
         $y = Cloudinary::option_consume($options, "y");
         $zoom = Cloudinary::option_consume($options, "zoom");
 
-      $params = array(
+        $params = array(
           "a"   => self::parse_expression($angle),
           "ar"  => self::parse_expression($aspect_ratio),
           "b"   => $background,
@@ -278,7 +278,8 @@ class Cloudinary {
             $params[$param] = Cloudinary::option_consume($options, $option);
         }
 
-        $variables = $options["variables"];
+        $variables = !empty($options["variables"]) ? $options["variables"] : [];
+        
         $var_params = [];
         foreach($options as $key => $value) {
           if (preg_match('/^\$/', $key)) {
