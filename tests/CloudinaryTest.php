@@ -583,13 +583,24 @@ class CloudinaryTest extends \PHPUnit\Framework\TestCase {
     $method->setAccessible(true);
     // should parse integer range values
     $this->assertEquals($method->invoke(NULL, "200"), "200");
+    $this->assertEquals($method->invoke(NULL, 200), "200");
+    $this->assertEquals($method->invoke(NULL, 0), "0");
     // should parse float range values
     $this->assertEquals($method->invoke(NULL, "200.0"), "200.0");
+    $this->assertEquals($method->invoke(NULL, 200.0), "200.0");
+    $this->assertEquals($method->invoke(NULL, 200.00), "200.0");
+    $this->assertEquals($method->invoke(NULL, 200.123), "200.123");
+    $this->assertEquals($method->invoke(NULL, 200.123000), "200.123");
+    $this->assertEquals($method->invoke(NULL, 0.0), "0.0");
     // should parse a percent range value
     $this->assertEquals($method->invoke(NULL, "20p"), "20p");
     $this->assertEquals($method->invoke(NULL, "20P"), "20p");
     $this->assertEquals($method->invoke(NULL, "20%"), "20p");
+    $this->assertEquals($method->invoke(NULL, "20.5%"), "20.5p");
+    // should handle invalid input
     $this->assertNull($method->invoke(NULL, "p"));
+    $this->assertNull($method->invoke(NULL, ""));
+    $this->assertNull($method->invoke(NULL, NULL));
   }
 
   public function test_video_codec(){
