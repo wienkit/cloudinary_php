@@ -7,8 +7,9 @@ namespace Cloudinary {
   require_once( 'TestHelper.php');
   use Cloudinary;
   use Exception;
+  use PHPUnit\Framework\TestCase;
 
-  class UploaderTest extends \PHPUnit\Framework\TestCase {
+  class UploaderTest extends TestCase {
 
     public $url_prefix;
     public static function setUpBeforeClass() {
@@ -149,6 +150,28 @@ namespace Cloudinary {
         assertParam($this, "public_ids[0]", "foobar");
         assertParam($this, "command", "replace");
         assertParam($this, "tag", "tag3");
+      }
+
+      /**
+       * Should successfully remove all tags for specified public IDs
+       */
+      public function test_remove_all_tags() {
+          $api = new \Cloudinary\Api();
+
+          $result = Uploader::upload(TEST_IMG);
+          $public_id = $result["public_id"];
+
+          Uploader::add_tag("tag1", $public_id);
+          Uploader::add_tag("tag2", $public_id);
+
+          $info = $api->resource($result["public_id"]);
+          $this->assertEquals(array("tag1", "tag2"), $info["tags"]);
+
+          $remove_all_tags_result = Uploader::remove_all_tags($public_id);
+          $this->assertEquals($public_id, $remove_all_tags_result["public_ids"][0]);
+
+          $info = $api->resource($result["public_id"]);
+          $this->assertArrayNotHasKey("tags", $info);
       }
   
       /**
