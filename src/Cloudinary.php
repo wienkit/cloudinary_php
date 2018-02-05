@@ -91,7 +91,7 @@ class Cloudinary {
     }
 
     public static function option_get($options, $option, $default=NULL) {
-        if (isset($options[$option])) {
+        if (array_key_exists($option, $options)) {
             return $options[$option];
         } else {
             return $default;
@@ -785,7 +785,8 @@ class Cloudinary {
         $cloud_name = Cloudinary::option_get($options, "cloud_name", Cloudinary::config_get("cloud_name"));
         if (!$cloud_name) throw new InvalidArgumentException("Must supply cloud_name in options or in configuration");
         $resource_type = Cloudinary::option_get($options, "resource_type", "image");
-        return implode("/", array($cloudinary, "v1_1", $cloud_name, $resource_type, $action));
+        $url_parts = array($cloudinary, "v1_1", $cloud_name, $resource_type, $action);
+        return implode("/", array_filter($url_parts, function($v){return !is_null($v);}));
     }
 
     public static function random_public_id() {
