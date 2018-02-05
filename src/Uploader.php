@@ -63,6 +63,21 @@ namespace Cloudinary {
             return Uploader::call_api("upload", $params, $options, $file);
         }
 
+        /**
+         * Delete a resource using the upload token
+         *
+         * @param string $delete_token  the delete token
+         * @param array $options        additional options passed to the request
+         * @return mixed                status
+         * @throws \Cloudinary\Error    in case an API call failed
+         */
+        public static function delete_by_token($delete_token, $options = array())
+        {
+            $options += array("unsigned" => TRUE, "resource_type" => NULL);
+            $params = array("token" => $delete_token);
+            return Uploader::call_api("delete_by_token", $params, $options);
+        }
+
         // Upload large raw files. Note that public_id should include an extension for best results.
         public static function upload_large($file, $options=array())
         {

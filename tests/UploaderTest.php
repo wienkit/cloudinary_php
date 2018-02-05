@@ -49,7 +49,27 @@ namespace Cloudinary {
 		  $this->assertArraySubset(array("ocr"=>"adv_ocr"),$fields);
 
 	  }
-  
+
+      /**
+       * Test delete_by_token functionality
+       *
+       * @expectedException Cloudinary\Api\NotFound
+       * @expectedExceptionMessage Resource not found
+       */
+      public function test_delete_by_token() {
+          $result = Uploader::upload( TEST_IMG, array("return_delete_token"=>TRUE));
+          $this->assertArrayHasKey("delete_token", $result);
+
+          $deletion_result_ok = Uploader::delete_by_token($result["delete_token"]);
+          $this->assertEquals("ok", $deletion_result_ok["result"]);
+
+          $deletion_result_not_found = Uploader::delete_by_token($result["delete_token"]);
+          $this->assertEquals("not found", $deletion_result_not_found["result"]);
+
+          $api = new Api();
+          $api->resource($result["public_id"]); // expected to raise Cloudinary\Api\NotFound
+      }
+
       public function test_rename() {
         Curl::mockUpload($this);
         Uploader::rename("foobar", "foobar2", array("overwrite" => TRUE));
