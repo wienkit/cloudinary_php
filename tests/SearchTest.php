@@ -7,9 +7,9 @@ namespace Cloudinary {
 	require_once( join( DIRECTORY_SEPARATOR, array( $base, "src", "Api.php" ) ) );
 	require_once( join( DIRECTORY_SEPARATOR, array( $base, "src", "Search.php" ) ) );
 	require_once( "TestHelper.php" );
-	use PHPUnit_Framework_TestCase;
+    use PHPUnit\Framework\TestCase;
 
-	class SearchTest extends PHPUnit_Framework_TestCase {
+	class SearchTest extends TestCase {
 		public $search;
 
 		public static function setUpBeforeClass() {

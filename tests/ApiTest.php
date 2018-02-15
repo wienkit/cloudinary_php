@@ -402,6 +402,7 @@ namespace Cloudinary {
     $this->api->create_transformation(self::$api_test_transformation_2, array("crop" => "scale", "width" => 103));
     $this->api->transformation(self::$api_test_transformation_2);
     $this->api->delete_transformation(self::$api_test_transformation_2);
+    assertDelete($this);
   }
 
   function test17a_transformation_delete_implicit() {

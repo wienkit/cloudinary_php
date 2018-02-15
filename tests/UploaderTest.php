@@ -116,7 +116,9 @@ namespace Cloudinary {
   
       public function test_headers() {
           Uploader::upload(TEST_IMG, array("headers"=>array("Link: 1")));
+	      assertParam($this, "headers", "Link: 1");
           Uploader::upload(TEST_IMG, array("headers"=>array("Link" => "1")));
+          assertParam($this, "headers", "Link: 1");
       }
   
       public function test_text() {
@@ -161,6 +163,7 @@ namespace Cloudinary {
               $ids[] = "foobarfoobarfoobarfoobarfoobar";
           }
           Uploader::add_tag("huge_list", $ids);
+	      assertParam($this, "public_ids[0]", $ids[0]);
   
       }
       public function test_use_filename() {

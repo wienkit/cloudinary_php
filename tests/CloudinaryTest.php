@@ -10,7 +10,8 @@ class CloudinaryTest extends \PHPUnit\Framework\TestCase {
 
   public function setUp() {
       Cloudinary::reset_config();
-    Cloudinary::config(array("cloud_name"=>"test123", "api_key" => "a", "api_secret"=>"b",  "secure_distribution" => NULL, "private_cdn" => FALSE));
+    Cloudinary::config(array("cloud_name"=>"test123", "api_key" => "a", "api_secret"=>"b",
+                             "secure_distribution" => null, "private_cdn" => false, "cname" => null));
   }
 
   public function test_cloud_name() {
