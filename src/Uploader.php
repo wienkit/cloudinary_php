@@ -94,7 +94,25 @@ namespace Cloudinary {
             $chunk_size = \Cloudinary::option_get($options, "chunk_size", 20000000);
             $public_id = \Cloudinary::option_get($options, "public_id");
             $index = 0;
-            $file_size = filesize($file);
+            $file_size = 0;
+
+            $host = parse_url($file, PHP_URL_HOST);
+            if (!empty($host)) {
+                $ch = curl_init($file);
+                curl_setopt($ch, CURLOPT_NOBODY, true);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HEADER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+                $data = curl_exec($ch);
+                curl_close($ch);
+                if (preg_match('/Content-Length: (\d+)/', $data, $matches)) {
+                  $file_size = (int)$matches[1];
+                }
+            } else {
+                $file_size = filesize($file);
+            }
+
             while (!feof($src)) {
                 $current_loc = $index * $chunk_size;
                 if ($current_loc >= $file_size) {
